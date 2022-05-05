@@ -57,7 +57,7 @@ window.addEventListener('message', function (eventData) {
            }, '*');
             console.log("12", window.location);
             window.location.href= 'https://wa.me/+94773233440?text=continue';
-                        console.log("34");
+                        console.log("triggering to WA");
             return;
         }
         if (parsedData?.event_code == 'custom-parenttoroot-checkout-event') {
