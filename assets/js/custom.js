@@ -6,50 +6,87 @@ function loadPageContent(page, data) {
         insertSearchBar();
         insertTabContainer();
         insertPromotionsContainer();
-        insertOrderHistoryProducts();
+        // JAY
+        // insertOrderHistoryProducts();
         insertFilterBar();
-        insertProducts(config.products);
-        insertInnerProducts(config.products);
+
+        let sortedProducts = groupProductsByCategory(config.products, "volume");
+        insertProducts(sortedProducts, "volume_name");
+        insertInnerProducts(sortedProducts);
+
         $('input').blur(function () {
-            // $($(this).siblings()[0]).fadeIn("slow").show();
-            // $($(this).siblings()[1]).fadeIn("slow").show();
-            // $(this).siblings(".addmore__qty").css("opacity", "0");
-            // $(this).siblings(".addmore__qty").css("display", "none");
+            setTimeout(() => {
+                if (this.type === "search") return;
+                $($(this).siblings()[0]).fadeIn("slow").show();
+                $($(this).siblings()[1]).fadeIn("slow").show();
+                $(this).siblings(".addmore__qty").css("opacity", "0");
+                $(this).siblings(".addmore__qty").css("display", "none");
+            }, 500);
         });
-        $('input').focus(function() {
+
+        $('input').focus(function () {
+            if (this.type === "search") return;
             $($(this).siblings()[0]).fadeIn("slow").hide();
             $($(this).siblings()[1]).fadeIn("slow").hide();
             $(this).siblings(".addmore__qty").css("opacity", "1");
             $(this).siblings(".addmore__qty").css("display", "block");
         });
+        
+        console.log("12.213 => ", config.products);
+        
+        for (let pObj of config.products) {
+            getAllProducts.push(...pObj.items);
+        }
+//         getAllProducts = config.products.map(p => p.item);
+
+        $('input').on('input', function () {
+            if (this.type === "search") return;
+            this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1').replace(/^0[^.]/, '0');
+            return;
+        });
     }
 
+    document.addEventListener('click', function (e) {
+        // e.preventDefault();
+        // e.stopPropagation();
+        emptySearch();
+    });
 
-    $('#search_input').on("input", function () {
+    $('#search_input').on("input", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         processChange(this);
     });
 
-    $('.close__icon__box').click(function () {
+    $('.close__icon__box').click(function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         emptySearch(this);
     });
 
-    $('.product-bottom-details').click(function () {
+    $('.product-bottom-details').click(function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         addProducts(this)
     });
 
-    $('.counter__minus').click(function () {
+    $('.counter__minus').click(function (e) {;
         updateCounter(this, "minus");
     });
 
-    $('.counter__plus').click(function () {
+    $('.counter__plus').click(function (e) {;
         updateCounter(this, "add");
     });
 
-    $('.item-drop').click(function () {
+    $('.item-drop').click(function (e) {
+        // e.preventDefault();
+        // e.stopPropagation();
         updateDropDownMenu(this);
     });
 
-    $('.submit').click(function () {
+    $('.submit').click(function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         let counterInput = $(this).parent().siblings(".counter__input");
         let currentValue = $(counterInput).val();
         let previousValue = $(counterInput).attr("previous-value");
@@ -59,16 +96,21 @@ function loadPageContent(page, data) {
         $($(this).parent().siblings()[2]).fadeIn("slow").show();
         $(this).parent(".addmore__qty").css("opacity", "0");
         $(this).parent(".addmore__qty").css("display", "none");
-        
-        if(currentValue != 0) {
-            if(previousValue > currentValue) {
-                for (let i = 0; i < (previousValue - currentValue); i++) {
-                    updateCounter($($(counterInput).siblings()[0]).children()[0], "minus");
-                }
-            } else {
-                for (let i = 0; i < currentValue; i++) {
-                    updateCounter($($(counterInput).siblings()[1]).children()[0], "add");
-                }
+
+        if (currentValue != 0) {
+            let productData = $(this).attr("product");
+            let decodedProductData = JSON.parse(decodeURIComponent(productData));
+            delete cartData[decodedProductData.sku];
+            counterInput.val(0);
+            counterInput.change();
+            counterInput.attr("previous-value", 0);
+            let numberCircleCount = $("#numberCircle").attr("value");
+            let parseCount = Number(numberCircleCount)
+            let updatedValue = parseCount - previousValue;
+            $("#numberCircle").attr("value", updatedValue);
+            $("#numberCircle").text(updatedValue);
+            for (let i = 0; i < currentValue; i++) {
+                updateCounter($($(counterInput).siblings()[1]).children()[0], "add");
             }
         }
     });
@@ -149,7 +191,9 @@ function insertPromotionsContainer() {
         `);
     });
 
-    $('.readmore').click(function () {
+    $('.readmore').click(function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         let readlessSibling = $(this).siblings(".readless")[0];
         let readmoreSibling = $(this).siblings(".product__quantity")[0];
         $(this).hide();
@@ -157,7 +201,9 @@ function insertPromotionsContainer() {
         $(readmoreSibling).css("display", "block");
     });
 
-    $('.readless').click(function () {
+    $('.readless').click(function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         let readlessSibling = $(this).siblings(".readmore")[0];
         let readmoreSibling = $(this).siblings(".product__quantity")[0];
         $(this).hide();
@@ -167,10 +213,19 @@ function insertPromotionsContainer() {
 
 }
 
-function insertOrderHistoryProducts() {
-    $("#orderhistory_container").prepend(`<p class="products__title">${config.recent_order.title}</p>`)
-    config.recent_order.products.map((product) => {
-        $("#orderhistory_container__inner").append(`
+function insertOrderHistoryProducts(data) {
+    console.log("Inside == . ", data);
+    // console.log("INSide the insertOrderHistoryProducts fubc => ", config.recent_order, data);
+    var titleEle = ".recent_order_title";
+    $(titleEle).empty();
+    $("#orderhistory_container").prepend(`<p class="products__title recent_order_title">${config.recent_order.title}</p>`)
+    // $("#orderhistory_container").prepend(`<p class="products__title recent_order_title">${config.recent_order.title}</p>`)
+    var elementNode = "#orderhistory_container__inner";
+    $(elementNode).empty();
+    // JAY
+    data.map((product) => {
+    // config.recent_order.products.map((product) => {
+        $(elementNode).append(`
             
             <div class="order__history__wrapper">
                 <div class="history__details">
@@ -209,10 +264,14 @@ function insertOrderHistoryProducts() {
         `)
     });
 
-    $(".counter__wrapper.orderhistory").click(function () {
+    $(".counter__wrapper.orderhistory").click(function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         updateProductsBasedOnProducts(this, "minus");
     });
-    $(".repeat.orderhistory").click(function () {
+    $(".repeat.orderhistory").click(function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         updateProductsBasedOnProducts(this, "add");
     });
 }
@@ -225,12 +284,12 @@ function insertFavouriteProducts() {
             <div class="product-card">
                 <div class="product-tumb favourite">
                     <div class="innerbox favourite">
-                        <embed src=${item.images} />
+                        <embed src=${item.icon} />
                     </div>
                 </div>
                 <div class="product__details inner">
                     <div class="product__text__wrapper">
-                        <p class="product__name">${item.product_name}</p>
+                        <p class="product__name">${item.name}</p>
                         <p class="product__quantity">${item.description}</p>
                         <p class="product__price">Rs. ${item.price}</p>
                     </div>
@@ -253,7 +312,7 @@ function insertFavouriteProducts() {
                             </div>
                             <div class="addmore__qty">
                                 <div class="submit" product="${encodeURIComponent(JSON.stringify(item))}">
-                                    <img src="/assets/images/svg/icons8-ok.svg" />
+                                    <img src="/coke/assets/images/svg/icons8-ok.svg" />
                                 </div>
                             </div>
                         </div>
@@ -274,13 +333,13 @@ function insertFilterBar() {
     });
 }
 
-function insertProducts(products) {
+function insertProducts(products, sortedBy) {
     products.map((product, index) => {
         $("#product_item_container").append(`
             <div class="faq-drawer">
                 <input class="faq-drawer__trigger" id=${"faq-drawer" + "-" + index} type="checkbox" autocomplete="off"/>
                 <label class="faq-drawer__title" for=${"faq-drawer" + "-" + index}>
-                    ${product.volume}
+                    ${product[sortedBy]}
                     <div class="product__bar__icon"><img src=${product.icon} /></div>
                 </label>
                 <div class="faq-drawer__content-wrapper">
@@ -308,6 +367,7 @@ function insertProducts(products) {
 }
 
 function insertInnerProducts(products) {
+    console.log("Hello there =? ", products);
     products.map((product, index) => {
         let listitem = "#products_container_inner" + index;
         product.items.map((item) => {
@@ -317,12 +377,12 @@ function insertInnerProducts(products) {
                 <div class="product-card">
                     <div class="product-tumb inner">
                         <div class="innerbox">
-                            <img class="img__wrapper inner" src=${item.image} alt="">
+                            <img class="img__wrapper inner" src=${item.icon} alt="">
                         </div>
                     </div>
                     <div class="product__details inner">
                         <div class="product__text__wrapper">
-                            <p class="product__name">${item.product_name}</p>
+                            <p class="product__name">${item.name} - ${item.listing_type}</p>
                             <p class="product__quantity">${item.description}</p>
                             <p class="product__price">Rs. ${item.price}</p>
                         </div>
@@ -345,7 +405,7 @@ function insertInnerProducts(products) {
                                 </div>
                                 <div class="addmore__qty">
                                     <div class="submit" product="${encodeURIComponent(JSON.stringify(item))}">
-                                        <img src="/assets/images/svg/icons8-ok.svg" />
+                                        <img src="/coke/assets/images/svg/icons8-ok.svg" />
                                     </div>
                                 </div>
                             </div>
@@ -368,6 +428,7 @@ function debounce(func, timeout = 300) {
 function saveInput(node) {
     var filter = "keywords";
     var keyword = node.value;
+    console.log("Get ALL products", getAllProducts);
     var filteredData = getAllProducts.filter(function (obj) {
         if (obj[filter] != "") {
             return obj[filter].includes(keyword);
@@ -387,7 +448,7 @@ function searchProducts(node) {
         $("#search_product_wrap").append(`
             <div class="product searchproducts">
                 <div class="left__wrapper">
-                    <div class="name">${item.name}</div>
+                    <div class="name">${item.name} - ${item.listing_type}</div>
                     <div class="description">${item.description}</div>
                     <div class="price">Rs. ${item.price}</div>
                 </div>
@@ -411,7 +472,7 @@ function searchProducts(node) {
                             </div>
                             <div class="addmore__qty">
                                 <div class="submit" product="${encodeURIComponent(JSON.stringify(item))}">
-                                    <img src="/assets/images/svg/icons8-ok.svg" />
+                                    <img src="/coke/assets/images/svg/icons8-ok.svg" />
                                 </div>
                             </div>
                         </div>
@@ -421,15 +482,30 @@ function searchProducts(node) {
         `);
     });
     if (node.length !== 0) {
-        $('.product-bottom-details').click(function () {
+
+        /* for (let key in cartData) {
+            $(`#promotions-add-searchbox-${key}`).hide();
+            $(`#promotions-counter-searchbox-${key}`).show();
+            $(`#counter_input_searchbox_${key}`).val(parseInt(cartData[key].quantity));
+            $(`#counter_input_searchbox_${key}`).change();
+            $(`#counter_input_searchbox_${key}`).attr("previous-value", parseInt(cartData[key].quantity) - 1 > 0 ? parseInt(cartData[key].quantity) - 1 : 0);
+        } */
+
+        $('.product-bottom-details').click(function (e) {
+            e.preventDefault();
+            e.stopPropagation();
             addProducts(this)
         });
 
-        $('.counter__minus').click(function () {
+        $('.counter__minus').click(function (e) {
+            e.preventDefault();
+            e.stopPropagation();
             updateCounter(this, "minus");
         });
 
-        $('.counter__plus').click(function () {
+        $('.counter__plus').click(function (e) {
+            e.preventDefault();
+            e.stopPropagation();
             updateCounter(this, "add");
         });
     }
@@ -439,6 +515,7 @@ function emptySearch(node) {
     $("#search_product_wrap").empty();
     $("#search_product_box").fadeIn().hide();
     $("#search_input").val("");
+    $('.close__icon__box').hide();
 }
 
 function switchTabs(id) {
@@ -482,6 +559,15 @@ function switchTabs(id) {
         default:
             break;
     }
+
+    // JAY
+    if (id == 2) {
+        // fire an event to get order history
+        window.parent.postMessage(JSON.stringify({
+            event_code: 'custom-recent-order-event',
+            data: { phone: config.phone }
+        }), '*'); 
+    }
 }
 
 
@@ -490,7 +576,7 @@ function addProducts(quantityInput) {
     let siblingWrapper = $(quantityInput).siblings(".counter__wrapper");
     let productData = $(quantityInput).attr("product");
     let decodedProductData = JSON.parse(decodeURIComponent(productData));
-    if(cartData && Object.keys(cartData).length !== 0 && cartData[decodedProductData.sku]?.quantity >= decodedProductData?.itemspercase) {
+    if (cartData && Object.keys(cartData).length !== 0 && cartData[decodedProductData.sku]?.quantity >= decodedProductData?.itemspercase) {
         showToastMessage(decodedProductData.itemspercase);
         return false;
     }
@@ -511,12 +597,12 @@ function updateCounter(counterInput, type, requestFrom) {
         var $input = $(siblingWrapper);
         let productData = $(counterInput).attr("product");
         let decodedProductData = JSON.parse(decodeURIComponent(productData));
-        if(cartData && Object.keys(cartData).length !== 0 && cartData[decodedProductData.sku].quantity >= decodedProductData.itemspercase) {
+        if (cartData && Object.keys(cartData).length !== 0 && cartData[decodedProductData.sku]?.quantity >= decodedProductData?.itemspercase) {
             showToastMessage(decodedProductData.itemspercase);
             return false;
         }
 
-        if(decodedProductData.itemspercase <= parseInt($input.val())) {
+        if (decodedProductData.itemspercase <= parseInt($input.val())) {
             showToastMessage(decodedProductData.itemspercase);
             return false;
         }
@@ -578,9 +664,97 @@ function updateDropDownMenu(dpItem) {
     $("#dpValue").text($(dpItem).text());
     $("#product_item_container").empty();
     let dpItemAttr = JSON.parse(decodeURIComponent($(dpItem).attr("item")));
-    let products = sortProducts(config.products, dpItemAttr.sortBy);
-    insertProducts(products);
-    insertInnerProducts(products);
+    let sortedProducts = groupProductsByCategory(config.products, dpItemAttr.sortBy);
+    // let products = sortProducts(config.products, dpItemAttr.sortBy);
+    let sortedBy = dpItemAttr.sortBy === "volume" ? "volume_name" : dpItemAttr.sortBy;
+    insertProducts(sortedProducts, sortedBy);
+    insertInnerProducts(sortedProducts);
+    if (cartData && Object.keys(cartData).length !== 0) {
+        for (let key in cartData) {
+            $(`#promotions-add-${key}`).hide();
+            $(`#promotions-counter-${key}`).show();
+            $(`#counter_input_${key}`).val(parseInt(cartData[key].quantity));
+            $(`#counter_input_${key}`).change();
+            $(`#counter_input_${key}`).attr("previous-value", parseInt(cartData[key].quantity) - 1 > 0 ? parseInt(cartData[key].quantity) - 1 : 0);
+        }
+
+        $('.counter__minus').click(function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            updateCounter(this, "minus");
+        });
+
+        $('.counter__plus').click(function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            updateCounter(this, "add");
+        });
+
+        $('.product-bottom-details').click(function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            addProducts(this)
+        });
+    }
+
+}
+
+function groupProductsByCategory(productsItemsJson, sortBy) {
+    let sortedProducts = [];
+    let productsArrayCopy = JSON.parse(JSON.stringify(productsItemsJson));
+    let groupedItems = groupProductsIntoItems(productsArrayCopy, sortBy);
+    let sortCategory = sortProductsByCategory(groupedItems);
+    if(sortBy === "brand") {
+        let uniqueListArr = getUniqueListBy(productsArrayCopy, 'brand');
+        sortedProducts = sortedByProducts(sortCategory, uniqueListArr, sortBy);
+    } else {
+        sortedProducts = sortedByProducts(sortCategory, productsArrayCopy, sortBy);
+    }
+    return sortedProducts;
+}
+
+function getUniqueListBy(arr, key) {
+    return [...new Map(arr.map(item => [item[key], item])).values()]
+}
+
+function groupProductsIntoItems(productsArray, sortBy) {
+    let groupProductsMultiJson = [];
+    for (let i = 0; i < productsArray.length; i++) {
+        groupProductsMultiJson.push(groupBy(productsArray[i].items, sortBy));
+    }
+    return groupProductsMultiJson;
+}
+
+function sortProductsByCategory(groupedItems) {
+    let sorted = {};
+    for (let i = 0; i < groupedItems.length; i++) {
+        for (let key in groupedItems[i]) {
+            if (sorted[key]) {
+                sorted[key] = [...sorted[key], ...groupedItems[i][key]];
+            } else {
+                sorted[key] = [...groupedItems[i][key]];
+            }
+        }
+    }
+    return sorted;
+}
+
+function sortedByProducts(sorted, productsArray, sortBy) {
+    for (let i = 0; i < productsArray.length; i++) {
+        productsArray[i].items = sorted[productsArray[i][sortBy]];
+    }
+    return productsArray;
+}
+
+function groupBy(objectArray, property) {
+    return objectArray.reduce(function (acc, obj) {
+        let key = obj[property]
+        if (!acc[key]) {
+            acc[key] = []
+        }
+        acc[key].push(obj)
+        return acc
+    }, {})
 }
 
 function sortProducts(products, sortBy) {
@@ -604,11 +778,13 @@ function sortProducts(products, sortBy) {
 }
 
 function updateCheckoutCartData(data, type) {
+    // JAY
     if (Object.keys(cartData).length == 0) {
         cartData[data.sku] = {
             "product_data": data,
             "quantity": 1
         }
+        // insertSelectedCoupon(config.checkout.discounts[0]);
         processQ(cartData, data.sku);
         return;
     }
@@ -673,10 +849,12 @@ function updateProductsBasedOnProducts(node, type) {
     let products = decodedProductDataa.products;
     for (const key in products) {
         let data = products[key].product_data;
-        for(var i=0; i < products[key].quantity; i++) {
+        for (var i = 0; i < products[key].quantity; i++) {
             if (type === "add") {
-                if(data.itemspercase <= parseInt(products[key].quantity)) {
+                if (data.itemspercase <= parseInt(products[key].quantity)) {
                     showToastMessage(data.itemspercase);
+                    $(orderhistoryNode).show();
+                    $(node).hide();
                     return false;
                 }
                 orderhistoryNode = $(node).siblings(".counter__wrapper.orderhistory");
@@ -687,6 +865,11 @@ function updateProductsBasedOnProducts(node, type) {
                 $("#numberCircle").text(updatedValue);
             }
             if (type === "minus") {
+                if (data.itemspercase <= parseInt(products[key].quantity)) {
+                    $(node).hide();
+                    $(orderhistoryNode).show();
+                    return false;
+                }
                 orderhistoryNode = $(node).siblings(".repeat.orderhistory");
                 let numberCircleCount = $("#numberCircle").attr("value");
                 let parseCount = Number(numberCircleCount);
@@ -697,7 +880,7 @@ function updateProductsBasedOnProducts(node, type) {
             updateCheckoutCartData(data, type);
         }
         // processQ({[key] : data}, key);
-        
+
     }
     $(orderhistoryNode).show();
     $(node).hide();
@@ -707,6 +890,5 @@ function showToastMessage(maxItems) {
     var x = document.querySelector("#simpleToast");
     x.className = "show";
     $(x).children(".toastMsg").text(`Max limit reached | ${maxItems} units`)
-    setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
-  }
-  
+    setTimeout(function () { x.className = x.className.replace("show", ""); }, 3000);
+}
