@@ -53,10 +53,6 @@ window.addEventListener('message', function (eventData) {
                 }
            }, '*');
             window.location.href= 'https://wa.me/+94773233440?text=continue';
-<<<<<<< HEAD
-                        console.log("triggering to WA");
-=======
->>>>>>> upstream/sandbox-iframe-support
             return;
         }
         if (parsedData?.event_code == 'custom-parenttoroot-checkout-event') {
