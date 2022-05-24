@@ -72,7 +72,7 @@ function insertOrderCart(orderCart, skuid) {
                                     </div>
                                 </div>
                                 <div class="addmore__qty checkout">
-                                    <div class="submit" product="${encodeURIComponent(JSON.stringify(product))}">
+                                    <div class="submit checkout" product="${encodeURIComponent(JSON.stringify(product))}">
                                         <img src="/coke/assets/images/svg/icons8-ok.svg" />
                                     </div>
                                 </div>
@@ -124,7 +124,7 @@ function insertOrderCart(orderCart, skuid) {
                                 </div>
                             </div>
                             <div class="addmore__qty checkout">
-                                <div class="submit" product="${encodeURIComponent(JSON.stringify(product))}">
+                                <div class="submit checkout" product="${encodeURIComponent(JSON.stringify(product))}">
                                     <img src="/coke/assets/images/svg/icons8-ok.svg" />
                                 </div>
                             </div>
@@ -159,7 +159,7 @@ function insertOrderCart(orderCart, skuid) {
         return;
     });
 
-    $('.submit').click(function () {
+    $('.submit.checkout').click(function () {
         let counterInput = $(this).parent().siblings(".counter__input");
         let currentValue = $(counterInput).val();
         let previousValue = $(counterInput).attr("previous-value");
@@ -183,8 +183,9 @@ function insertOrderCart(orderCart, skuid) {
             $("#numberCircle").attr("value", updatedValue);
             $("#numberCircle").text(updatedValue);
             for (let i = 0; i < currentValue; i++) {
-                updateCounterDataFromCheckout("add")
+                updateCounterDataFromCheckout("add", "bulk")
             }
+            passDataToBot(cartData, "bulk");
         }
     });
 }
@@ -206,7 +207,6 @@ function insertSelectedCoupon(discountData, type, data) {
     discountPrice = 0;
     $('#title_loader').empty();
     discountData.map((discount, index) => {
-        console.log('Here it comes ==+=> ', discount, index);
         discountPrice += discount.discountedPrice;
         let qty = discount.quantity > 0 ? `<span>${discount.quantity}</span>` : "";
         $(elementNode).append(`
@@ -237,7 +237,6 @@ function insertSelectedCoupon(discountData, type, data) {
         `)
     });
 
-    console.log('CHecking discount price', discountPrice, orderCartData);
     if (+discountPrice > 0) {
         showDiscountLable();
     } else {
@@ -428,14 +427,16 @@ function hideDiscount() {
     recalculateCart(decodedDiscountData);
 } */
 
-function processQ(data, skuid) {
-    // syncContainers(skuid);
+function processQ(data, skuid, bulkType) {
     if (Object.keys(data).length === 0) {
         emptyContainerData();
         return;
     }
     insertOrderCart(data, skuid);
-    passDataToBot(data);
+
+    if(!bulkType) {
+        passDataToBot(data, bulkType);
+    }
     recalculateCart();
 }
 
@@ -587,11 +588,11 @@ function recalculateCart() {
     return orderCartData;
 }
 
-function updateCounterDataFromCheckout(type) {
+function updateCounterDataFromCheckout(type, bulk) {
     let targetNode = $(event.target).parent();
     let selectedProduct = $(targetNode).attr("product")
     let decodedselectedProduct = JSON.parse(decodeURIComponent(selectedProduct));
-    updateCounter(targetNode, type, "checkout");
+    updateCounter(targetNode, type, "checkout", bulk);
     let value = $(targetNode).parent().siblings(".counter__input").val();
     $(`#counter_input_${decodedselectedProduct.sku}`).val(value);
     $(`#counter_input_${decodedselectedProduct.sku}`).change();
@@ -605,21 +606,20 @@ function sendDataToBot() {
     }), '*');
 }
 
-function passDataToBot(data) {
-    console.log("BEFORERERER +++++++++++", data);
+function passDataToBot(data, bulkType) {
     window.parent.postMessage(JSON.stringify({
         event_code: 'custom-checkout-event',
         data: data
     }), '*');
 
-    const values = Object.values(data);
+    console.log("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n data ->>>>>>", data, "\n\n\n\n\n\n\n\n\n\n\n", bulkType);
+
+    /* const values = Object.values(data);
     const totalLength = values ? values.length : 0;
     const itemsWithNoQuantity = values.filter(obj => obj.quantity == 0);
     
-    console.log("Data to compare => ", values, itemsWithNoQuantity, totalLength)
     if (totalLength == itemsWithNoQuantity.length) {
         $('#item_total').text(0);
         $('#item_total').attr("orderValue", 0);
-    }
-    console.log("AFTER ++");
+    } */
 }

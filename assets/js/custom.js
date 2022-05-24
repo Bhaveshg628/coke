@@ -33,13 +33,10 @@ function loadPageContent(page, data) {
             $(this).siblings(".addmore__qty").css("display", "block");
             emptySearch();
         });
-        
-        console.log("12.213 => ", config.products);
-        
+
         for (let pObj of config.products) {
             getAllProducts.push(...pObj.items);
         }
-//         getAllProducts = config.products.map(p => p.item);
 
         $('input').on('input', function () {
             if (this.type === "search") return;
@@ -109,8 +106,9 @@ function loadPageContent(page, data) {
             $("#numberCircle").attr("value", updatedValue);
             $("#numberCircle").text(updatedValue);
             for (let i = 0; i < currentValue; i++) {
-                updateCounter($($(counterInput).siblings()[1]).children()[0], "add");
+                updateCounter($($(counterInput).siblings()[1]).children()[0], "add", "", "bulk");
             }
+            passDataToBot(cartData, "bulk");
         }
     });
 }
@@ -213,12 +211,9 @@ function insertPromotionsContainer() {
 }
 
 function insertOrderHistoryProducts(data) {
-    console.log("Inside == . ", data);
-    // console.log("INSide the insertOrderHistoryProducts fubc => ", config.recent_order, data);
     var titleEle = ".recent_order_title";
     $(titleEle).empty();
     $("#orderhistory_container").prepend(`<p class="products__title recent_order_title">${config.recent_order.title}</p>`)
-    // $("#orderhistory_container").prepend(`<p class="products__title recent_order_title">${config.recent_order.title}</p>`)
     var elementNode = "#orderhistory_container__inner";
     $(elementNode).empty();
     // JAY
@@ -275,53 +270,6 @@ function insertOrderHistoryProducts(data) {
     });
 }
 
-function insertFavouriteProducts() {
-    config.favourites.items.map((item) => {
-        let isdisabled = item.quantity_available ? false : true;
-        let btnName = isdisabled ? "Out of stock" : "ADD";
-        $("#favourites__container").append(`
-            <div class="product-card">
-                <div class="product-tumb favourite">
-                    <div class="innerbox favourite">
-                        <embed src=${item.icon} />
-                    </div>
-                </div>
-                <div class="product__details inner">
-                    <div class="product__text__wrapper">
-                        <p class="product__name">${item.name}</p>
-                        <p class="product__quantity">${item.description}</p>
-                        <p class="product__price">Rs. ${item.price}</p>
-                    </div>
-                    <div isdisabled=${isdisabled} class="product-bottom-details" product="${encodeURIComponent(JSON.stringify(item))}">
-                        <div class="btn" isdisabled=${isdisabled}>${btnName}</div>
-                    </div>
-                    <div class="counter__wrapper hide">
-                        <div class="counter__container">
-                            <div class="counter__box__container">
-                                <div class="counter__minus" id="minus" product="${encodeURIComponent(JSON.stringify(item))}">
-                                    <img src="/coke/assets/images/png/minus.png" />
-                                </div>
-                            </div>
-                        
-                            <input id="counter_input_${item.sku}" class="counter__input home" type="text" value="1" size="2" maxlength="2" autocomplete="off" previous-value="1" />
-                            <div class="counter__box__container" product="${encodeURIComponent(JSON.stringify(item))}">
-                                <div class="counter__plus" id="plus">
-                                    <img src="/coke/assets/images/png/plus.png" />
-                                </div>
-                            </div>
-                            <div class="addmore__qty">
-                                <div class="submit" product="${encodeURIComponent(JSON.stringify(item))}">
-                                    <img src="/coke/assets/images/svg/icons8-ok.svg" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `);
-    });
-}
-
 function insertFilterBar() {
     if (!($("#product_header_bar").is(":visible"))) {
         $("#product_header_bar").css('display', 'flex');
@@ -366,7 +314,6 @@ function insertProducts(products, sortedBy) {
 }
 
 function insertInnerProducts(products) {
-    console.log("Hello there =? ", products);
     products.map((product, index) => {
         let listitem = "#products_container_inner" + index;
         product.items.map((item) => {
@@ -427,7 +374,6 @@ function debounce(func, timeout = 300) {
 function saveInput(node) {
     var filter = "keywords";
     var keyword = node.value;
-    console.log("Get ALL products", getAllProducts);
     var filteredData = getAllProducts.filter(function (obj) {
         if (obj[filter] != "") {
             return obj[filter].includes(keyword);
@@ -472,7 +418,7 @@ function searchProducts(node) {
                                 </div>
                             </div>
                             <div class="addmore__qty searchbox">
-                                <div class="submit" product="${encodeURIComponent(JSON.stringify(item))}">
+                                <div class="submit search" product="${encodeURIComponent(JSON.stringify(item))}">
                                     <img src="/coke/assets/images/svg/icons8-ok.svg" />
                                 </div>
                             </div>
@@ -556,7 +502,7 @@ function searchProducts(node) {
             $(this).siblings(".addmore__qty").css("display", "block");
         });
 
-        $('.submit').click(function (e) {
+        $('.submit.search').click(function (e) {
             e.preventDefault();
             e.stopPropagation();
             let counterInput = $(this).parent().siblings(".counter__input");
@@ -582,7 +528,7 @@ function searchProducts(node) {
                 $("#numberCircle").attr("value", updatedValue);
                 $("#numberCircle").text(updatedValue);
                 for (let i = 0; i < currentValue; i++) {
-                    updateCounter($($(counterInput).siblings()[1]).children()[0], "add");
+                    updateCounter($($(counterInput).siblings()[1]).children()[0], "add", "", "bulk");
                 }
 
                 $(`#promotions-add-${decodedProductData.sku}`).hide();
@@ -593,6 +539,7 @@ function searchProducts(node) {
                     $(v).attr("previous-value", previousValue);
                 })
                 $(`#promotions-counter-${decodedProductData.sku}`).show();
+                passDataToBot(cartData, "bulk");
                 // $(`#counter_input_${decodedProductData.sku}`).attr("previous-value", parseInt(cartData[decodedProductData.sku].quantity) - 1 > 0 ? parseInt(cartData[decodedProductData.sku].quantity) - 1 : 0);
             }
         });
@@ -679,7 +626,7 @@ function addProducts(quantityInput) {
 }
 
 
-function updateCounter(counterInput, type, requestFrom) {
+function updateCounter(counterInput, type, requestFrom, bulkType) {
     let siblingWrapper = $(counterInput).parent().siblings(".counter__input");
     if (type === "add") {
         var $input = $(siblingWrapper);
@@ -702,7 +649,7 @@ function updateCounter(counterInput, type, requestFrom) {
         let updatedValue = parseCount + 1;
         $("#numberCircle").attr("value", updatedValue);
         $("#numberCircle").text(updatedValue);
-        updateCheckoutCartData(decodedProductData, "add");
+        updateCheckoutCartData(decodedProductData, "add", bulkType);
         return false;
     }
 
@@ -737,7 +684,7 @@ function updateCounter(counterInput, type, requestFrom) {
                 $("#numberCircle").text(updatedValue);
             }
 
-            updateCheckoutCartData(decodedProductData, "minus");
+            updateCheckoutCartData(decodedProductData, "minus", bulkType);
             return false;
         }
         count = count < 1 ? 0 : count;
@@ -865,15 +812,13 @@ function sortProducts(products, sortBy) {
     });
 }
 
-function updateCheckoutCartData(data, type) {
-    // JAY
+function updateCheckoutCartData(data, type, bulkType) {
     if (Object.keys(cartData).length == 0) {
         cartData[data.sku] = {
             "product_data": data,
             "quantity": 1
         }
-        // insertSelectedCoupon(config.checkout.discounts[0]);
-        processQ(cartData, data.sku);
+        processQ(cartData, data.sku, bulkType);
         return;
     }
 
@@ -903,7 +848,7 @@ function updateCheckoutCartData(data, type) {
         }
 
     }
-    processQ(cartData, data.sku);
+    processQ(cartData, data.sku, bulkType);
 }
 
 function updateProductsBasedOnProducts(node, type) {
@@ -917,8 +862,6 @@ function updateProductsBasedOnProducts(node, type) {
         let updatedValue = parseCount + 1;
         $("#numberCircle").attr("value", updatedValue);
         $("#numberCircle").text(updatedValue);
-
-
     }
     if (type === "minus") {
         orderhistoryNode = $(node).siblings(".repeat.orderhistory");
