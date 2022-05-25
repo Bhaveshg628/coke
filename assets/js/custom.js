@@ -17,6 +17,7 @@ function loadPageContent(page, data) {
         $('input').blur(function () {
             setTimeout(() => {
                 if (this.type === "search") return;
+                $(this).val($(this).attr("previous-value"));
                 $($(this).siblings()[0]).fadeIn("slow").show();
                 $($(this).siblings()[1]).fadeIn("slow").show();
                 $(this).siblings(".addmore__qty").css("opacity", "0");
@@ -113,6 +114,10 @@ function loadPageContent(page, data) {
     });
 }
 
+function numberWithCommas(number) {
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 function insertSearchBar() {
     document.getElementById("search_input").placeholder = config.search.placeholder;
 }
@@ -157,7 +162,7 @@ function insertPromotionsContainer() {
                         <p class="product__quantity">${promotion.description}</p>
                         ${promotion.description.length > 60 ? `<div class="readmore">read more</div>` : ""}
                         <div class="readless hide">read less</div>
-                        <p class="product__price">Rs. ${promotion.price}</p>
+                        <p class="product__price">Rs. ${numberWithCommas(promotion.price)}</p>
                     </div>
                     <div isdisabled=${isdisabled} class="product-bottom-details" id="promotions-add-${promotion.sku}" product="${encodeURIComponent(JSON.stringify(promotion))}">
                         <div class="btn" isdisabled=${isdisabled}>${btnName}</div>
@@ -330,7 +335,7 @@ function insertInnerProducts(products) {
                         <div class="product__text__wrapper">
                             <p class="product__name">${item.name} - ${item.listing_type}</p>
                             <p class="product__quantity">${item.description}</p>
-                            <p class="product__price">Rs. ${item.price}</p>
+                            <p class="product__price">Rs. ${numberWithCommas(item.price)}</p>
                         </div>
                         <div isdisabled=${isdisabled} class="product-bottom-details" id="promotions-add-${item.sku}" product="${encodeURIComponent(JSON.stringify(item))}">
                             <div class="btn inner" isdisabled=${isdisabled}>${btnName}</div>
@@ -397,7 +402,7 @@ function searchProducts(node) {
                 <div class="left__wrapper">
                     <div class="name">${item.name} - ${item.listing_type}</div>
                     <div class="description">${item.description}</div>
-                    <div class="price">Rs. ${item.price}</div>
+                    <div class="price">Rs. ${numberWithCommas(item.price)}</div>
                 </div>
                 <div class="right__wrapper searchbox">
                     <div isdisabled=${isdisabled} class="product-bottom-details" id="promotions-add-searchbox-${item.sku}" product="${encodeURIComponent(JSON.stringify(item))}">
@@ -487,6 +492,7 @@ function searchProducts(node) {
             e.stopPropagation();
             setTimeout(() => {
                 if (this.type === "search") return;
+                $(this).val($(this).attr("previous-value"));
                 $($(this).siblings()[0]).fadeIn("slow").show();
                 $($(this).siblings()[1]).fadeIn("slow").show();
                 $(this).siblings(".addmore__qty").css("opacity", "0");
@@ -554,7 +560,6 @@ function emptySearch(node) {
 }
 
 function switchTabs(id) {
-    event.preventDefault();
     let siblings = $(event.target).siblings();
     let parsedSiblings = [...siblings]
     parsedSiblings.forEach(ele => {

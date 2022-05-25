@@ -45,7 +45,7 @@ function insertOrderCart(orderCart, skuid) {
                     <div class="details__section">
                         <div class="name">${product.name} ${type}</div>
                         <div class="discount__offer">
-                            <span class="price">Rs. ${product.price}</span>
+                            <span class="price">Rs. ${numberWithCommas(product.price)}</span>
                         </div>
                         <div class="discount__detail">${product.discount_detail}</div>
                         <div class="discount__detail__bar">
@@ -97,7 +97,7 @@ function insertOrderCart(orderCart, skuid) {
                 <div class="details__section">
                     <div class="name">${product.name} ${type}</div>
                     <div class="discount__offer">
-                        <span class="price">Rs. ${product.price}</span>
+                        <span class="price">Rs. ${numberWithCommas(product.price)}</span>
                     </div>
                     <div class="discount__detail">${product.discount_detail}</div>
                     <div class="discount__detail__bar">
@@ -138,6 +138,7 @@ function insertOrderCart(orderCart, skuid) {
     $('.counter__input.checkout').blur(function () {
         setTimeout(() => {
             if(this.type === "search") return;
+            $(this).val($(this).attr("previous-value"));
             $($(this).siblings()[0]).fadeIn("slow").show();
             $($(this).siblings()[1]).fadeIn("slow").show();
             $(this).siblings(".addmore__qty").css("opacity", "0");
@@ -514,13 +515,13 @@ function recalculateOrderSummary(data) {
         $('#text__loading').empty();
         $('#continue_cta').removeClass("disabled");
 
-        $('#item_total').text(data.subtotal.toFixed(2));
+        $('#item_total').text(numberWithCommas(data.subtotal.toFixed(2)));
         $('#item_total').attr("orderValue", data.subtotal.toFixed(2));
 
         $('#discout_perc').text(discount.toFixed(2));
         $('#discout_perc').attr("orderValue", discount.toFixed(2));
 
-        $('#grand_total').text(total.toFixed(2));
+        $('#grand_total').text(numberWithCommas(total.toFixed(2)));
         $('#grand_total').attr("orderValue", total.toFixed(2));
 
         $('.item').fadeIn(300);
