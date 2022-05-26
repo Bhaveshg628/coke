@@ -380,8 +380,12 @@ function saveInput(node) {
     var filter = "keywords";
     var keyword = node.value;
     var filteredData = getAllProducts.filter(function (obj) {
+        console.log("\n\n\n search \n\n\n");
+        console.log(obj[filter]);
+        console.log(keyword.toLowerCase());
+
         if (obj[filter] != "") {
-            return obj[filter].includes(keyword);
+            return obj[filter].includes(keyword.toLowerCase());
         }
     });
     searchProducts(filteredData)
