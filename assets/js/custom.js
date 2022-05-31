@@ -240,7 +240,7 @@ function insertOrderHistoryProducts(data) {
                     </div>
                     <div class="product__counter">
                         <div class="icon__wrapper">
-                            <img src="/coke/assets/images/png/product.png" />
+                            <img src="https://cdn.yellowmessenger.com/lz1hLoQ0Vqo91653626367953.svg"/>
                         </div>
                         <div class="repeat orderhistory" id="product-bottom-details" product="${encodeURIComponent(JSON.stringify(product))}">
                             <div class="btn">REPEAT</div>
@@ -286,13 +286,16 @@ function insertFilterBar() {
 }
 
 function insertProducts(products, sortedBy) {
+    let iconValue = sortedBy === "volume_name" ? "icon" : "bybrandsIcons";
+    console.log("icon value --> ", iconValue);
     products.map((product, index) => {
+        console.log("icon inner ", product[iconValue]);
         $("#product_item_container").append(`
             <div class="faq-drawer">
                 <input class="faq-drawer__trigger" id=${"faq-drawer" + "-" + index} type="checkbox" autocomplete="off"/>
                 <label class="faq-drawer__title" for=${"faq-drawer" + "-" + index}>
                     ${product[sortedBy]}
-                    <div class="product__bar__icon"><img src=${product.icon} /></div>
+                    <div class="product__bar__icon"><img src=${product[iconValue]} /></div>
                 </label>
                 <div class="faq-drawer__content-wrapper">
                     <div class="faq-drawer__content">
