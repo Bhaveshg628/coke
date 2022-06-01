@@ -70,12 +70,12 @@
             window.addEventListener('scroll', resetTimer, true); // improved; see comments
 
             function yourFunction() {
-                alert("Due to inactivity, the current session has timed out.\n Please click on the 'Ok' button to refresh.");
+                alert("Session time out!!!");
             }
 
             function resetTimer() {
                 clearTimeout(t);
-                t = setTimeout(yourFunction, 6000);  // time is in milliseconds
+                t = setTimeout(yourFunction, 1800000);  // time is in milliseconds
             }
         }
         idleLogout();
